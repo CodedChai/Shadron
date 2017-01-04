@@ -1,0 +1,93 @@
+// A slight modification on the second Shadron Tutorial
+#include <math_constants>
+#include <multisample>
+
+glsl struct Cogwheel {
+    vec2 center;
+    float r;
+    int teeth;
+    float toothSize;
+    float toothShape;
+    float rAxle;
+    int spokes;
+    float rotation;
+    float angularVel;
+};
+
+param vec2 center = vec2(0.5, 0.4);
+param float r = 0.3;
+param int teeth = 12;
+param float toothSize = 0.03;
+param float toothShape = 0.5;
+param float rAxle = 0.05;
+param int spokes = 6;
+param float rotation = 0.0;
+param float angularVel = 1.0;
+param vec2 attachDirection = vec2(0.5, 1.0);
+param vec2 attachDirection2 = vec2(0.3, 0.5);
+param int teeth2 = 6;
+
+glsl float cogwheelSolid(Cogwheel c, float r, float a) {
+    return 1.0;
+}
+
+glsl float cogwheelSpokes(Cogwheel c, float r, float a) {
+    float spokes = 1.0 - step(c.toothSize + c.rAxle, abs(r*cos(0.5*float(c.spokes)*a)));
+    float rim = step(c.r - 3.0*c.toothSize, r);
+    return max(spokes, rim);
+}
+
+template <DESIGN>
+glsl float sampleCogwheel(Cogwheel c, vec2 pos, float time) {
+    pos -= c.center;
+    float r = length(pos);
+    float a = atan(pos.x, pos.y) - (c.rotation + c.angularVel*time);
+
+    float phase = fract(0.5/PI * float(c.teeth) * a);
+    float toothHeight = 4.0 * abs(phase - 0.5) - 1.0;
+
+    float radius = c.r + c.toothSize * clamp(toothHeight / c.toothShape, -1.0, +1.0);
+
+    float body = 1.0 - step(radius, r);
+    float axle = step(c.rAxle, r);
+
+    float inside = DESIGN(c, r, a);
+
+    return min(min(body, axle), inside);
+}
+
+glsl Cogwheel attachCogwheel(Cogwheel A, vec2 direction, int teeth) {
+    Cogwheel B = A;
+    B.teeth = teeth;
+    float ratio = float(A.teeth)/float(B.teeth);
+    B.r = A.r/ratio;
+    B.angularVel = -ratio*A.angularVel;
+    B.center = A.center + (A.r+B.r)*normalize(direction);
+    float omega = atan(direction.x, direction.y);
+    B.rotation = PI + PI/float(B.teeth) - ratio*A.rotation + omega + ratio*omega;
+    return B;
+}
+
+glsl vec4 preview(vec2 pos) {
+    Cogwheel c;
+    c.center = center;
+    c.r = r;
+    c.teeth = teeth;
+    c.toothSize = toothSize;
+    c.toothShape = toothShape;
+    c.rAxle = rAxle;
+    c.spokes = spokes;
+    c.rotation = rotation;
+    c.angularVel = angularVel;
+
+    float sample1 = sampleCogwheel<cogwheelSpokes>(c, pos, shadron_Time);
+    c = attachCogwheel(c, attachDirection, teeth2);
+    float sample2 = sampleCogwheel<cogwheelSpokes>(c, pos, shadron_Time);
+    c = attachCogwheel(c, attachDirection2, 7);
+    float sample3 = sampleCogwheel<cogwheelSolid>(c, pos, shadron_Time);
+    float sample = max(max(sample1, sample2), sample3);
+    return vec4(0.0, 0.0, 0.0, sample);
+}
+
+animation Preview = glsl(multisample<preview, 4>, 512, 512);
+ 
