@@ -1,0 +1,17 @@
+//Comment
+const vec4 PURPLE = vec4(75.0/255.0, 0.0, 130.0/255.0, 1.0);
+const vec4 TRANSPARENT = vec4(1.0, 1.0, 1.0, 1.0);
+
+parameter float size = .4;
+
+glsl vec4 myShader(vec2 position, float time) {
+	float d = distance(position, vec2(.5, .5));
+	float currentSize = size + 0.1 * sin(4.0 * time);
+	if(d < currentSize)
+		return PURPLE;
+	else 
+		return TRANSPARENT;
+
+}
+
+animation MyAnimation = glsl(myShader, 512, 512);
