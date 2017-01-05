@@ -1,4 +1,4 @@
-//Comment
+// Shadron tutorial example 1
 const vec4 PURPLE = vec4(75.0/255.0, 0.0, 130.0/255.0, 1.0);
 const vec4 TRANSPARENT = vec4(1.0, 1.0, 1.0, 1.0);
 

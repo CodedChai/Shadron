@@ -1,0 +1,13 @@
+#include <perlin>
+#include <worley>
+
+glsl vec4 CellularNoise(vec2 pos, float time){
+	vec2 currentPos = pos;
+	currentPos.y += time * 0.1;// * cos(2.0 * time);
+	currentPos.x += 0.1 * sin(0.8 * time);
+	vec2 water = worleyNoise(currentPos * 10) * .35;
+	water.x = water.x * 0.3;
+	return vec4(water, 1.0, (perlinNoise(pos ) * 0.4 + 0.6));
+}
+
+animation Cellular = glsl(CellularNoise, 1024, 1024);
